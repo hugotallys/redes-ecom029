@@ -31,6 +31,28 @@ Observações **importantes**:
 3. A aplicação não suporta login de usuário (sem autenticação). Nem tampouco permissões de usuário na execução de cada comando.
 4. Todos os programas foram testados na plataforma Linux.
 
+# Executando a aplicação
+
+Clone o repositório e no diretório principal do projeto instale os pacotes necessários. É recomendável criar antes um ambiente virtual no python. No linux, basta executar:
+
+```console
+$ python3 -m venv <nome> # Cria o ambiente virtual.
+$ source <nome>/bin/activate # Ativa o ambiente virtual.
+$ pip install -r requirements.txt # Instala os pacotes necessários.
+```
+
+Para iniciar o programa servidor execute:
+
+```console
+$ python myftpserver.py <port_number>
+```
+
+Para programa cliente execute (o nome do servidor é informado ao executar o comando acima):
+
+```console
+$ python myftp.py <server_name> <port_number>
+```
+
 # Referências
 
 A principal inspiração para esse trabalho foi o material encontrado em [Programming-Project1](http://cobweb.cs.uga.edu/~laks/DCS-2021-Sp/pp1/Programming-Project1.pdf) da Universidade da Geórgia, a qual deixamos os devidos créditos.
