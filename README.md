@@ -20,7 +20,7 @@ na máquina remota ou muda para o diretório pai do diretório atual.
 O funcionamento do cliente e servidor são explicados a seguir:
 
 * Servidor FTP (programa `myftpserver`) - O programa servidor recebe um único parâmetro de linha de comando que é o número da porta a qual o servidor irá executar. Uma vez que o programa `myftpserver` for invocado, ele cria um _socket_ TCP, associa o número da porta do servidor ao seu _socket_ e passa a escutar conexões de clientes. Mensagens de erro apropriadas são mostradas caso qualquer um dos passos anteriores falhem. Quando uma conexão com um cliente é estabelecida, o servidor começa a aceitar comandos e executá-los. Mensagens de erro apropriadas são enviadas ao cliente sempre que os comandos falham. Ao receber o comando `quit`, o servidor encerra a conexão e fica pronto para aceitar outras conexões.
-O próprio diretório onde o programa servidor reside é o diretório de trabalho inicial para cada conexão estabelecida (ou seja se o primeiro comando de um cliente for `pwd` ele verá o caminho do diretório onde o programa servidor reside).
+O diretório de trabalho inicial para cada conexão estabelecida é o subdiretório `myftp` da pasta principal do repositório (ou seja se o primeiro comando de um cliente for `pwd` ele verá o caminho `myftp`).
 
 * Cliente FTP (programa `myftp`) - O programa do cliente FTP recebe dois parâmetros de linha de comando: o endereço da máquina que o servidor reside e o número da porta. Uma vez que o cliente começa a rodar ele exibe um _prompt_ `myftp>`. A partir daí aceita e executa comandos enviando-os para o servidor e exibindo os resultados e mensagens de erro quando apropriado. O cliente deve sessar sua execução quando o usuário entrar o comando `quit`.
 
