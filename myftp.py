@@ -1,7 +1,12 @@
+import sys
 import socket
+
+from utils import default_route_ip, SEPARATOR, BUFFER_SIZE
 
 
 class FTPClient:
+
+    name = default_route_ip()
 
     def __init__(self, server_port, server_name):
 
@@ -28,7 +33,8 @@ class FTPClient:
         """
         Recieves bytes from the server and through the TCP connection.
         """
-        return self.client_socket.recv(2048)#what this number means ?
+        # Maximum amount of data to be received at once.
+        return self.client_socket.recv(BUFFER_SIZE)
 
     def terminate(self):
         """
@@ -50,13 +56,31 @@ class FTPClient:
         else:
             return parsed[0], parsed[1]
 
+    def format_message(self, cmd, param, file_size=0):
+
+        return (
+            f"ClientName:{self.name}{SEPARATOR}Command:{cmd}{SEPARATOR}"
+            f"Parameter:{param}{SEPARATOR}FileSize:{file_size}"
+        )
+
 
 if __name__ == "__main__":
 
-    server_name = "localhost"
-    server_port = 12000
+    try:
+        server_name = sys.argv[1]
+        port_number = sys.argv[2]
+    except IndexError:
+        raise IndexError(
+            (
+                "Parameter <server_name> or <port_number> is missing. "
+                "To execute this program run:\n"
+                "$ python myftp.py <server_name> <port_number>"
+            )
+        )
 
-    ftp_client = FTPClient(server_port=server_port, server_name=server_name)
+    ftp_client = FTPClient(
+        server_name=server_name, server_port=int(port_number)
+    )
 
     command = input("myftp>")
     cmd, param = ftp_client.parse_command(command=command)
@@ -65,12 +89,13 @@ if __name__ == "__main__":
 
         ftp_client.connect()
 
-        ftp_client.send_to_server(bytes=bytes(f"{cmd}#{param}\n", "utf-8"))
+        message = ftp_client.format_message(cmd, param)
+        ftp_client.send_to_server(bytes=bytes(message, "utf-8"))
 
-        modified_sentence = ftp_client.recieve_from_server()
+        server_response = ftp_client.recieve_from_server()
 
         # Outputs message on screen.
-        print("Recieved from server:", modified_sentence.decode("utf-8"))
+        print(server_response.decode("utf-8"))
 
         command = input("myftp>")
         cmd, param = ftp_client.parse_command(command=command)
