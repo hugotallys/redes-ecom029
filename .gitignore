@@ -130,3 +130,6 @@ dmypy.json
 
 # Remote directory
 myftp/
+
+# Visual Studio Code
+.vscode/
