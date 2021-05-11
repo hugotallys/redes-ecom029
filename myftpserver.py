@@ -75,6 +75,29 @@ class FileManager:
                 "the current working directory"
             )
 
+    def put(self, client_name, filename, filesize, content, socket):
+
+        filepath = os.path.join(
+            self.sessions[client_name], filename
+        )
+
+        with open(filepath, "wb") as file:
+
+            file.write(content)
+
+            read_bytes = len(content)
+
+            while read_bytes < int(filesize):
+                chunk = socket.recv(
+                    min(int(filesize) - read_bytes, BUFFER_SIZE)
+                )
+                if chunk == b'':
+                    raise RuntimeError("socket connection broken")
+                file.write(chunk)
+                read_bytes += len(chunk)
+
+        return "File transfered!"
+
 
 class FTPServer:
 
@@ -122,9 +145,16 @@ class FTPServer:
 
             # Recieves the message sent by the client.
             message = connection_socket.recv(BUFFER_SIZE)
-            message = message.decode("utf-8")
 
-            client_name, cmd, param, file_size = self.parse_message(message)
+            message = message.split(bytes(SEPARATOR + SEPARATOR, "utf-8"))
+
+            header = message[0].decode("utf-8")
+
+            content = b""
+            if len(message) == 2:
+                content = message[1]
+
+            client_name, cmd, param, file_size = self.parse_message(header)
 
             if cmd == "quit":
                 file_manager.unregister_session(client_name)
@@ -138,9 +168,15 @@ class FTPServer:
             # If the command is not implemented returns error.
             if hasattr(file_manager, cmd):
                 if param != "":
-                    response_message = getattr(file_manager, cmd)(
-                        client_name, param
-                    )
+                    if cmd == "put":
+                        response_message = getattr(file_manager, cmd)(
+                            client_name, param, file_size,
+                            content, connection_socket
+                        )
+                    else:
+                        response_message = getattr(file_manager, cmd)(
+                            client_name, param
+                        )
                 else:
                     response_message = getattr(file_manager, cmd)(client_name)
             else:

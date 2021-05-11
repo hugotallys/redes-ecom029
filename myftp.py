@@ -1,3 +1,4 @@
+import os
 import sys
 import socket
 
@@ -28,6 +29,11 @@ class FTPClient:
         Sends bytes via client socket and to the TCP connection.
         """
         self.client_socket.send(bytes)
+
+    def put_to_server(self, message, filename):
+        """
+        Puts local file in the server.
+        """
 
     def recieve_from_server(self):
         """
@@ -89,8 +95,21 @@ if __name__ == "__main__":
 
         ftp_client.connect()
 
-        message = ftp_client.format_message(cmd, param)
-        ftp_client.send_to_server(bytes=bytes(message, "utf-8"))
+        if cmd == "put":
+            with open(param, "rb") as file:
+                file_size = os.path.getsize(param)
+                message = ftp_client.format_message(
+                    cmd, param, file_size
+                )
+
+                message = bytes(SEPARATOR + SEPARATOR, "utf-8").join(
+                    [bytes(message, "utf-8"), file.read()]
+                )
+
+                ftp_client.client_socket.sendall(message)
+        else:
+            message = ftp_client.format_message(cmd, param)
+            ftp_client.send_to_server(bytes=bytes(message, "utf-8"))
 
         server_response = ftp_client.recieve_from_server()
 
