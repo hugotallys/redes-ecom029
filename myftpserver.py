@@ -119,7 +119,6 @@ class FTPServer:
         while True:
             # Creates the client connection socket
             connection_socket, addr = server_socket.accept()
-            connection_socket.setblocking(False)
 
             # Recieves the message sent by the client.
             message = connection_socket.recv(BUFFER_SIZE)
