@@ -3,7 +3,7 @@
 O objetivo desse projeto é desenvolver uma aplicação cliente e servidor que implementa uma versão simplificada do protocolo __FTP__. As duas componentes principais do módulo são os executáveis do cliente `myftp` e do servidor `myftpserver`. Os comandos FTP implementados são:
 
 1. __get__ (`get <arquivo_remoto>`) - Copia o arquivo com o nome <arquivo_remoto> do diretório remoto para o diretório local.
-2. __put__ (`put <arquivo_local>`) - Copia o arquivo com o nome <arquivo_local> do diretório local para o diretório remoto.
+2. __put__ (`put <arquivo_local>`) - Copia o arquivo com o nome <arquivo_local> do diretório local (pasta principal do projeto) para o diretório remoto.
 3. __delete__ (`delete <arquivo_remoto>`) - Deleta o arquivo com o nome <arquivo_remoto> do diretório remoto.
 4. __ls__ (`ls`) - Lista os arquivos e subdiretórios no diretório remoto.
 5. __cd__ (`cd <diretorio_remoto>` ou `cd ..`) - Muda para o <diretorio_remoto>
@@ -44,22 +44,22 @@ O funcionamento do cliente e servidor são explicados a seguir:
 
 ## Implementação do protocolo
 
-O protocolo da camada de aplicação proposto segue o seguinte formato (`[]` indica espaço vazio e `[_]` uma quebra de linha):
+O protocolo da camada de aplicação proposto segue o seguinte formato:
 
 #### Mensagem de requisição
 
 ```
-COMMAND[]PARAMETER[_]
-ClientName[]CLIENT_NAME[_]
-FileSize[]FILESIZE[_]
-[_]
+COMMAND PARAMETER<SEPARATOR>
+ClientName CLIENT_NAME<SEPARATOR>
+FileSize FILESIZE<SEPARATOR>
+<SEPARATOR>
 CONTENT
 ```
 #### Mensagem de resposta
 
 ```
-STATUS_CODE[]MESSAGE[_]
-[_]
+STATUS_CODE MESSAGE<SEPARATOR>
+<SEPARATOR>
 CONTENT
 ```
 
