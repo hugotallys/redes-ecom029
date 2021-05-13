@@ -55,7 +55,7 @@ class FileManager:
             self.sessions[client_name] = os.path.split(
                 self.sessions[client_name]
             )[0]
-        return ""
+        return f"Changed to {self.sessions[client_name]}"
 
     def ls(self, client_name):
         file_list = [
@@ -183,7 +183,6 @@ class FTPServer:
                 response_message = f"The command {cmd} is not implemented!"
 
             connection_socket.send(bytes(response_message, "utf-8"))
-            connection_socket.close()
 
 
 if __name__ == "__main__":

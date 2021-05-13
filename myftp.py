@@ -34,6 +34,18 @@ class FTPClient:
         """
         Puts local file in the server.
         """
+        with open(filename, "rb") as file:
+            message = bytes(message + SEPARATOR + SEPARATOR, "utf-8")
+
+            ftp_client.client_socket.sendall(message)
+
+            chunk = file.read(BUFFER_SIZE)
+
+            while chunk != b"":
+
+                ftp_client.client_socket.sendall(chunk)
+
+                chunk = file.read(BUFFER_SIZE)
 
     def recieve_from_server(self):
         """
@@ -96,17 +108,11 @@ if __name__ == "__main__":
         ftp_client.connect()
 
         if cmd == "put":
-            with open(param, "rb") as file:
-                file_size = os.path.getsize(param)
-                message = ftp_client.format_message(
-                    cmd, param, file_size
-                )
-
-                message = bytes(SEPARATOR + SEPARATOR, "utf-8").join(
-                    [bytes(message, "utf-8"), file.read()]
-                )
-
-                ftp_client.client_socket.sendall(message)
+            file_size = os.path.getsize(param)
+            message = ftp_client.format_message(
+                cmd, param, file_size
+            )
+            ftp_client.put_to_server(message, param)
         else:
             message = ftp_client.format_message(cmd, param)
             ftp_client.send_to_server(bytes=bytes(message, "utf-8"))
@@ -119,6 +125,6 @@ if __name__ == "__main__":
         command = input("myftp>")
         cmd, param = ftp_client.parse_command(command=command)
 
-        ftp_client.terminate()
+    ftp_client.terminate()
 
     print("Bye!")
