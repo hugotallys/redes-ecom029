@@ -35,7 +35,7 @@ class FTPClient:
         Puts local file in the server.
         """
         with open(filename, "rb") as file:
-            message = bytes(message + SEPARATOR + SEPARATOR, "utf-8")
+            message = bytes(message, "utf-8")
 
             ftp_client.client_socket.sendall(message)
 
@@ -74,11 +74,12 @@ class FTPClient:
         else:
             return parsed[0], parsed[1]
 
-    def format_message(self, cmd, param, file_size=0):
+    def request_message(self, cmd, param, file_size=0):
 
         return (
-            f"ClientName:{self.name}{SEPARATOR}Command:{cmd}{SEPARATOR}"
-            f"Parameter:{param}{SEPARATOR}FileSize:{file_size}"
+            f"{cmd} {param}{SEPARATOR}"
+            f"ClientName {self.name}{SEPARATOR}"
+            f"FileSize {file_size}{SEPARATOR}{SEPARATOR}"
         )
 
 
@@ -109,12 +110,12 @@ if __name__ == "__main__":
 
         if cmd == "put":
             file_size = os.path.getsize(param)
-            message = ftp_client.format_message(
+            message = ftp_client.request_message(
                 cmd, param, file_size
             )
             ftp_client.put_to_server(message, param)
         else:
-            message = ftp_client.format_message(cmd, param)
+            message = ftp_client.request_message(cmd, param)
             ftp_client.send_to_server(bytes=bytes(message, "utf-8"))
 
         server_response = ftp_client.recieve_from_server()

@@ -113,14 +113,10 @@ class FTPServer:
         """
         message = message.split(SEPARATOR)
 
-        message_dict = {
-            key: value for key, value in [m.split(":") for m in message]
-        }
-
-        client_name = message_dict["ClientName"]
-        command = message_dict["Command"]
-        parameter = message_dict["Parameter"]
-        file_size = message_dict["FileSize"]
+        command = message[0].split(" ")[0]
+        parameter = message[0].split(" ")[1]
+        client_name = message[1].split(" ")[1]
+        file_size = message[2].split(" ")[1]
 
         return client_name, command, parameter, file_size
 
@@ -150,11 +146,11 @@ class FTPServer:
 
             header = message[0].decode("utf-8")
 
-            content = b""
-            if len(message) == 2:
-                content = message[1]
+            content = message[1]
 
             client_name, cmd, param, file_size = self.parse_message(header)
+
+            print(header)
 
             if cmd == "quit":
                 file_manager.unregister_session(client_name)
