@@ -1,13 +1,13 @@
 import os
+import ast
 import sys
 import socket
-
-from utils import default_route_ip, SEPARATOR, BUFFER_SIZE
+import utils
 
 
 class FTPClient:
 
-    name = default_route_ip()
+    name = utils.default_route_ip()
 
     def __init__(self, server_port, server_name):
 
@@ -39,20 +39,20 @@ class FTPClient:
 
             ftp_client.client_socket.sendall(message)
 
-            chunk = file.read(BUFFER_SIZE)
+            chunk = file.read(utils.BUFFER_SIZE)
 
             while chunk != b"":
 
                 ftp_client.client_socket.sendall(chunk)
 
-                chunk = file.read(BUFFER_SIZE)
+                chunk = file.read(utils.BUFFER_SIZE)
 
     def recieve_from_server(self):
         """
         Recieves bytes from the server and through the TCP connection.
         """
         # Maximum amount of data to be received at once.
-        return self.client_socket.recv(BUFFER_SIZE)
+        return self.client_socket.recv(utils.BUFFER_SIZE)
 
     def terminate(self):
         """
@@ -77,10 +77,36 @@ class FTPClient:
     def request_message(self, cmd, param, file_size=0):
 
         return (
-            f"{cmd} {param}{SEPARATOR}"
-            f"ClientName {self.name}{SEPARATOR}"
-            f"FileSize {file_size}{SEPARATOR}{SEPARATOR}"
+            f"{cmd} {param}{utils.SEPARATOR}"
+            f"ClientName {self.name}{utils.SEPARATOR}"
+            f"FileSize {file_size}{utils.SEPARATOR}{utils.SEPARATOR}"
         )
+
+    def parse_message(self, message):
+        message = message.split(
+            bytes(utils.SEPARATOR + utils.SEPARATOR, "utf-8")
+        )
+
+        header = message[0].decode("utf-8")
+        content = message[1]
+
+        header = header.split(utils.SEPARATOR)
+
+        success_code = header[0]
+        return_type = header[1].split(" ")[1]
+
+        if success_code == "1":
+            # success message
+            if return_type == utils.PROMPT_MESSAGE:
+                return content.decode("utf-8")
+            elif return_type == utils.LIST_MESSAGE:
+                list_values = ast.literal_eval(content.decode("utf-8"))
+                return "\n".join(list_values)
+            else:
+                return "File transfered with success!"
+        else:
+            # error message
+            return content.decode("utf-8")
 
 
 if __name__ == "__main__":
@@ -121,7 +147,7 @@ if __name__ == "__main__":
         server_response = ftp_client.recieve_from_server()
 
         # Outputs message on screen.
-        print(server_response.decode("utf-8"))
+        print(ftp_client.parse_message(server_response))
 
         command = input("myftp>")
         cmd, param = ftp_client.parse_command(command=command)

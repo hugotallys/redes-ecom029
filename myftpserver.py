@@ -1,8 +1,7 @@
 import os
 import sys
 import socket
-
-from utils import default_route_ip, SEPARATOR, BUFFER_SIZE
+import utils
 
 
 class FileManager:
@@ -16,7 +15,9 @@ class FileManager:
             os.mkdir(self.remote_path)
 
     def register_session(self, client_name):
-
+        """
+        Associates client_name to a working path.
+        """
         if self.sessions is not None:
             if client_name not in self.sessions:
                 self.sessions[client_name] = self.remote_path
@@ -24,55 +25,92 @@ class FileManager:
             self.sessions = {client_name: self.remote_path}
 
     def unregister_session(self, client_name):
-
+        """
+        Removes the associated path of client_name.
+        """
         if client_name in self.sessions:
             del self.sessions[client_name]
 
     def pwd(self, client_name):
-        return self.sessions[client_name]
+        """
+        Outputs the current working directory on client screen.
+        """
+        return self.format_message(
+            status_code=utils.SUCCESS, return_type=utils.PROMPT_MESSAGE,
+            content=self.sessions[client_name]
+        )
 
     def mkdir(self, client_name, dirname):
         dir_path = os.path.join(self.sessions[client_name], dirname)
 
-        if not os.path.exists(dir_path):
+        try:
             os.mkdir(dir_path)
-            return f"Directory created at {dir_path}"
-        else:
-            return f"Directory already exists at {dir_path}"
+            return self.format_message(
+                status_code=utils.SUCCESS, return_type=utils.PROMPT_MESSAGE,
+                content=f"Direcotry created at {dir_path}"
+            )
+        except Exception as error:
+            return self.format_message(
+                status_code=utils.ERROR, return_type=utils.PROMPT_MESSAGE,
+                content=str(error)
+            )
 
     def cd(self, client_name, dirname):
+
+        if dirname == "..":
+            self.sessions[client_name] = os.path.split(
+                self.sessions[client_name]
+            )[0]
+
+            return self.format_message(
+                status_code=utils.SUCCESS, return_type=utils.PROMPT_MESSAGE,
+                content=f"Current remote path is {self.sessions[client_name]}"
+            )
+
         dir_list = [
             filename for filename in os.listdir(self.sessions[client_name])
             if os.path.isdir(
                 os.path.join(self.sessions[client_name], filename)
             )
         ]
-        if dirname in dir_list:
-            self.sessions[client_name] = os.path.join(
-                self.sessions[client_name], dirname
+
+        if dirname not in dir_list:
+            return self.format_message(
+                status_code=utils.ERROR, return_type=utils.PROMPT_MESSAGE,
+                content=f"{dirname} not found in the current remote path."
             )
-        elif dirname == "..":
-            self.sessions[client_name] = os.path.split(
-                self.sessions[client_name]
-            )[0]
-        return f"Changed to {self.sessions[client_name]}"
+
+        self.sessions[client_name] = os.path.join(
+            self.sessions[client_name], dirname
+        )
+
+        return self.format_message(
+            status_code=utils.SUCCESS, return_type=utils.PROMPT_MESSAGE,
+            content=f"Current remote path is {self.sessions[client_name]}"
+        )
 
     def ls(self, client_name):
         file_list = [
             filename for filename in os.listdir(self.sessions[client_name])
         ]
-        return str(file_list)
+        return self.format_message(
+            status_code=utils.SUCCESS, return_type=utils.LIST_MESSAGE,
+            content=str(file_list)
+        )
 
     def delete(self, client_name, filename):
         filepath = os.path.join(self.sessions[client_name], filename)
 
-        if os.path.exists(filepath):
+        try:
             os.remove(filepath)
-            return f"File {filename} deleted from remote."
-        else:
-            return (
-                f"No file {filename} exists in "
-                "the current working directory"
+            return self.format_message(
+                status_code=utils.SUCCESS, return_type=utils.PROMPT_MESSAGE,
+                content=f"Deleted file {filepath}"
+            )
+        except Exception as error:
+            return self.format_message(
+                status_code=utils.SUCCESS, return_type=utils.PROMPT_MESSAGE,
+                content=str(error)
             )
 
     def put(self, client_name, filename, filesize, content, socket):
@@ -89,14 +127,24 @@ class FileManager:
 
             while read_bytes < int(filesize):
                 chunk = socket.recv(
-                    min(int(filesize) - read_bytes, BUFFER_SIZE)
+                    min(int(filesize) - read_bytes, utils.BUFFER_SIZE)
                 )
                 if chunk == b'':
                     raise RuntimeError("socket connection broken")
                 file.write(chunk)
                 read_bytes += len(chunk)
 
-        return "File transfered!"
+        return self.format_message(
+            status_code=utils.SUCCESS, return_type=utils.PROMPT_MESSAGE,
+            content="File sucessfully transfered!"
+        )
+
+    def format_message(self, status_code, return_type, content=""):
+        return (
+            f"{status_code}{utils.SEPARATOR}"
+            f"ReturnType {return_type}{utils.SEPARATOR}{utils.SEPARATOR}"
+            f"{content}"
+        )
 
 
 class FTPServer:
@@ -104,14 +152,14 @@ class FTPServer:
     def __init__(self, port_number):
 
         self.port_number = port_number
-        self.name = default_route_ip()
+        self.name = utils.default_route_ip()
 
     def parse_message(self, message):
         """
         Recieves the formated message and parses each componenet.
         :param message: String representing the client request.
         """
-        message = message.split(SEPARATOR)
+        message = message.split(utils.SEPARATOR)
 
         command = message[0].split(" ")[0]
         parameter = message[0].split(" ")[1]
@@ -140,9 +188,11 @@ class FTPServer:
             connection_socket, addr = server_socket.accept()
 
             # Recieves the message sent by the client.
-            message = connection_socket.recv(BUFFER_SIZE)
+            message = connection_socket.recv(utils.BUFFER_SIZE)
 
-            message = message.split(bytes(SEPARATOR + SEPARATOR, "utf-8"))
+            message = message.split(
+                bytes(utils.SEPARATOR + utils.SEPARATOR, "utf-8")
+            )
 
             header = message[0].decode("utf-8")
 
