@@ -44,24 +44,7 @@ O funcionamento do cliente e servidor são explicados a seguir:
 
 ## Implementação do protocolo
 
-O protocolo da camada de aplicação proposto segue o seguinte formato:
-
-#### Mensagem de requisição
-
-```
-COMMAND PARAMETER<SEPARATOR>
-ClientName CLIENT_NAME<SEPARATOR>
-FileSize FILESIZE<SEPARATOR>
-<SEPARATOR>
-CONTENT
-```
-#### Mensagem de resposta
-
-```
-STATUS_CODE MESSAGE<SEPARATOR>
-<SEPARATOR>
-CONTENT
-```
+Para um detalhamento do protocolo proposto ver arquivo `PROTOCOLO.md`.
 
 Observações **importantes**:
 
