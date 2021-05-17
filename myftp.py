@@ -47,12 +47,39 @@ class FTPClient:
 
                 chunk = file.read(utils.BUFFER_SIZE)
 
-    def recieve_from_server(self):
+    def recieve_from_server(self, filename):
         """
         Recieves bytes from the server and through the TCP connection.
         """
-        # Maximum amount of data to be received at once.
-        return self.client_socket.recv(utils.BUFFER_SIZE)
+
+        message = self.client_socket.recv(utils.BUFFER_SIZE)
+
+        file_transer, response = self.parse_message(message)
+
+        if not file_transer:
+            return response
+
+        message = message.split(
+            bytes(utils.SEPARATOR + utils.SEPARATOR, "utf-8")
+        )
+
+        try:
+            with open(filename, "wb") as file:
+
+                read_bytes = 0
+
+                while read_bytes < response:
+                    chunk = self.client_socket.recv(
+                        min(int(response) - read_bytes, utils.BUFFER_SIZE)
+                    )
+                    if chunk == b'':
+                        raise RuntimeError("socket connection broken")
+                    file.write(chunk)
+                    read_bytes += len(chunk)
+
+                return "File sucessfully transfered!"
+        except Exception as error:
+            return str(error)
 
     def terminate(self):
         """
@@ -94,19 +121,20 @@ class FTPClient:
 
         success_code = header[0]
         return_type = header[1].split(" ")[1]
+        file_size = header[2].split(" ")[1]
 
         if success_code == "1":
             # success message
             if return_type == utils.PROMPT_MESSAGE:
-                return content.decode("utf-8")
+                return False, content.decode("utf-8")
             elif return_type == utils.LIST_MESSAGE:
                 list_values = ast.literal_eval(content.decode("utf-8"))
-                return "\n".join(list_values)
+                return False, "\n".join(list_values)
             else:
-                return "File transfered with success!"
+                return True, int(file_size)
         else:
             # error message
-            return content.decode("utf-8")
+            return False, content.decode("utf-8")
 
 
 if __name__ == "__main__":
@@ -144,10 +172,10 @@ if __name__ == "__main__":
             message = ftp_client.request_message(cmd, param)
             ftp_client.send_to_server(bytes=bytes(message, "utf-8"))
 
-        server_response = ftp_client.recieve_from_server()
+        server_response = ftp_client.recieve_from_server(param)
 
         # Outputs message on screen.
-        print(ftp_client.parse_message(server_response))
+        print(server_response)
 
         command = input("myftp>")
         cmd, param = ftp_client.parse_command(command=command)

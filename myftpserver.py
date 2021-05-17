@@ -139,10 +139,44 @@ class FileManager:
             content="File sucessfully transfered!"
         )
 
-    def format_message(self, status_code, return_type, content=""):
+    def get(self, client_name, filename, socket):
+
+        filepath = os.path.join(
+            self.sessions[client_name], filename
+        )
+
+        try:
+            file_size = os.path.getsize(filepath)
+
+            with open(filepath, "rb") as file:
+                message = self.format_message(
+                    status_code=utils.SUCCESS, return_type=utils.FILE_MESSAGE,
+                    file_size=file_size, content=""
+                )
+
+                socket.sendall(bytes(message, "utf-8"))
+
+                chunk = file.read(utils.BUFFER_SIZE)
+
+                while chunk != b"":
+
+                    socket.sendall(chunk)
+
+                    chunk = file.read(utils.BUFFER_SIZE)
+            return None
+        except Exception as error:
+            return self.format_message(
+                status_code=utils.ERROR, return_type=utils.PROMPT_MESSAGE,
+                content=str(error)
+            )
+
+    def format_message(
+        self, status_code, return_type, content="", file_size=0
+    ):
         return (
             f"{status_code}{utils.SEPARATOR}"
-            f"ReturnType {return_type}{utils.SEPARATOR}{utils.SEPARATOR}"
+            f"ReturnType {return_type}{utils.SEPARATOR}"
+            f"FileSize {file_size}{utils.SEPARATOR}{utils.SEPARATOR}"
             f"{content}"
         )
 
@@ -219,6 +253,10 @@ class FTPServer:
                             client_name, param, file_size,
                             content, connection_socket
                         )
+                    elif cmd == "get":
+                        response_message = getattr(file_manager, cmd)(
+                            client_name, param, connection_socket
+                        )
                     else:
                         response_message = getattr(file_manager, cmd)(
                             client_name, param
@@ -226,9 +264,13 @@ class FTPServer:
                 else:
                     response_message = getattr(file_manager, cmd)(client_name)
             else:
-                response_message = f"The command {cmd} is not implemented!"
+                response_message = file_manager.format_message(
+                    status_code=utils.ERROR, return_type=utils.PROMPT_MESSAGE,
+                    content=f"Comando {cmd} não foi implementado!"
+                )
 
-            connection_socket.send(bytes(response_message, "utf-8"))
+            if response_message is not None:
+                connection_socket.send(bytes(response_message, "utf-8"))
 
 
 if __name__ == "__main__":
