@@ -59,20 +59,20 @@ class FTPClient:
         if not file_transer:
             return response
 
-        message = message.split(
-            bytes(utils.SEPARATOR + utils.SEPARATOR, "utf-8")
-        )
+        content, file_size = response
 
         try:
             with open(filename, "wb") as file:
 
-                read_bytes = 0
+                file.write(content)
 
-                while read_bytes < response:
+                read_bytes = len(content)
+
+                while read_bytes < file_size:
                     chunk = self.client_socket.recv(
-                        min(int(response) - read_bytes, utils.BUFFER_SIZE)
+                        min(file_size - read_bytes, utils.BUFFER_SIZE)
                     )
-                    if chunk == b'':
+                    if chunk == b"":
                         raise RuntimeError("socket connection broken")
                     file.write(chunk)
                     read_bytes += len(chunk)
@@ -131,7 +131,7 @@ class FTPClient:
                 list_values = ast.literal_eval(content.decode("utf-8"))
                 return False, "\n".join(list_values)
             else:
-                return True, int(file_size)
+                return True, (content, int(file_size))
         else:
             # error message
             return False, content.decode("utf-8")
