@@ -158,9 +158,9 @@ if __name__ == "__main__":
     command = input("myftp>")
     cmd, param = ftp_client.parse_command(command=command)
 
-    while cmd != "quit":
+    ftp_client.connect()
 
-        ftp_client.connect()
+    while cmd != "quit":
 
         if cmd == "put":
             file_size = os.path.getsize(param)
@@ -180,6 +180,8 @@ if __name__ == "__main__":
         command = input("myftp>")
         cmd, param = ftp_client.parse_command(command=command)
 
+    message = ftp_client.request_message(cmd, param)
+    ftp_client.send_to_server(bytes=bytes(message, "utf-8"))
     ftp_client.terminate()
 
     print("Bye!")
