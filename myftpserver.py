@@ -2,6 +2,7 @@ import os
 import sys
 import socket
 import utils
+import threading
 
 
 class FileManager:
@@ -205,10 +206,8 @@ class FTPServer:
 
         return client_name, command, parameter, file_size
 
-    def handle_connection(self):
+    def handle_connection(self, connection_socket, addr):
 
-        # Creates the client connection socket
-        connection_socket, addr = self.server_socket.accept()
         print(f"Connected to {addr}")
 
         while True:
@@ -234,9 +233,7 @@ class FTPServer:
                 connection_socket.close()
                 print(f"Connection to {addr} terminated.")
 
-                connection_socket, addr = self.server_socket.accept()
-                print(f"Connected to {addr}")
-                continue
+                return
 
             # Registers the client in the file manager.
             self.file_manager.register_session(client_name=client_name)
@@ -281,7 +278,15 @@ class FTPServer:
 
         print(f"Server is running on {self.name}:{self.port_number}")
 
-        self.handle_connection()
+        while True:
+
+            # Creates the client connection socket
+            connection_socket, addr = self.server_socket.accept()
+
+            th = threading.Thread(
+                target=self.handle_connection, args=[connection_socket, addr]
+            )
+            th.start()
 
 
 if __name__ == "__main__":
