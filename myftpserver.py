@@ -188,6 +188,9 @@ class FTPServer:
         self.port_number = port_number
         self.name = utils.default_route_ip()
 
+        self.file_manager = FileManager()
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
     def parse_message(self, message):
         """
         Recieves the formated message and parses each componenet.
@@ -202,24 +205,13 @@ class FTPServer:
 
         return client_name, command, parameter, file_size
 
-    def run(self):
+    def handle_connection(self):
 
-        file_manager = FileManager()
-
-        # Creates TCP Socket.
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Binds the port number to its socket.
-        server_socket.bind(("", self.port_number))
-
-        # Listens until a client "hits" the door.
-        server_socket.listen(1)  # Maximum of 1 connection in the queue
-
-        print(f"Server is running on {self.name}:{self.port_number}")
+        # Creates the client connection socket
+        connection_socket, addr = self.server_socket.accept()
+        print(f"Connected to {addr}")
 
         while True:
-            # Creates the client connection socket
-            connection_socket, addr = server_socket.accept()
 
             # Recieves the message sent by the client.
             message = connection_socket.recv(utils.BUFFER_SIZE)
@@ -228,49 +220,68 @@ class FTPServer:
                 bytes(utils.SEPARATOR + utils.SEPARATOR, "utf-8")
             )
 
+            print(message)
+
             header = message[0].decode("utf-8")
 
             content = message[1]
 
             client_name, cmd, param, file_size = self.parse_message(header)
 
-            print(header)
-
             if cmd == "quit":
-                file_manager.unregister_session(client_name)
+
+                self.file_manager.unregister_session(client_name)
                 connection_socket.close()
+                print(f"Connection to {addr} terminated.")
+
+                connection_socket, addr = self.server_socket.accept()
+                print(f"Connected to {addr}")
                 continue
 
             # Registers the client in the file manager.
-            file_manager.register_session(client_name=client_name)
+            self.file_manager.register_session(client_name=client_name)
 
             # Executes the command.
             # If the command is not implemented returns error.
-            if hasattr(file_manager, cmd):
+            if hasattr(self.file_manager, cmd):
                 if param != "":
                     if cmd == "put":
-                        response_message = getattr(file_manager, cmd)(
+                        response_message = getattr(self.file_manager, cmd)(
                             client_name, param, file_size,
                             content, connection_socket
                         )
                     elif cmd == "get":
-                        response_message = getattr(file_manager, cmd)(
+                        response_message = getattr(self.file_manager, cmd)(
                             client_name, param, connection_socket
                         )
                     else:
-                        response_message = getattr(file_manager, cmd)(
+                        response_message = getattr(self.file_manager, cmd)(
                             client_name, param
                         )
                 else:
-                    response_message = getattr(file_manager, cmd)(client_name)
+                    response_message = getattr(self.file_manager, cmd)(
+                        client_name
+                    )
             else:
-                response_message = file_manager.format_message(
+                response_message = self.file_manager.format_message(
                     status_code=utils.ERROR, return_type=utils.PROMPT_MESSAGE,
                     content=f"Comando {cmd} não foi implementado!"
                 )
 
             if response_message is not None:
                 connection_socket.send(bytes(response_message, "utf-8"))
+
+    def run(self):
+
+        # Binds the port number to its socket.
+        self.server_socket.bind(("", self.port_number))
+
+        # Listens until a client "hits" the door.
+        self.server_socket.listen(1)  # Maximum of 1 connection in the queue
+
+        print(f"Server is running on {self.name}:{self.port_number}")
+
+        self.handle_connection()
 
 
 if __name__ == "__main__":
