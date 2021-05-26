@@ -33,8 +33,10 @@ $ pip install -r requirements.txt # Instala os pacotes necessários.
 ```
 
 * Caso surja o erro `erro: Microsoft Visual C++ 14.0 is required` ao instalar os pacotes necessários:
+
+[Visual Studio](https://visualstudio.microsoft.com/pt-br/downloads/)
 ```console
-$ instale o Visual Studio 2019 Community (https://visualstudio.microsoft.com/pt-br/downloads/).
+$ instale o Visual Studio 2019 Community no link acima.
 $ durante a instalação, selecione Desktop development with c++.
 $ não precisa conectar a conta da microsoft e começar com código.
 $ na parte superior selecione extensions e procure por c++, com isso o download será feito.
