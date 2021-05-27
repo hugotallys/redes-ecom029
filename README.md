@@ -46,7 +46,7 @@ O funcionamento do cliente e servidor são explicados a seguir:
 
 Para um detalhamento do protocolo proposto ver arquivo `PROTOCOLO.md`.
 
-Observações **importantes**:
+## Observações sobre a execução do projeto
 
 1. O servidor implmentado é concorrente (_multi-threaded_).
 2. Assumimos que o usuário sempre digita um comando com a sintaxe correta (i.e. não existe checagem da sintaxe).
