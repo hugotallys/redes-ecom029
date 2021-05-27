@@ -7,13 +7,12 @@ import utils
 
 class FTPClient:
 
-    name = utils.default_route_ip()
-
     def __init__(self, server_port, server_name):
 
         self.server_port = server_port
         self.server_name = server_name
         self.client_socket = None
+        self.name = None
 
     def connect(self):
         """
@@ -23,6 +22,9 @@ class FTPClient:
         # and making explicit that it is a TCP socket (SOCK_STREAM).
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((self.server_name, self.server_port))
+
+        addr, port = self.client_socket.getsockname()
+        self.name = f"{addr}:{port}"
 
     def send_to_server(self, bytes):
         """
