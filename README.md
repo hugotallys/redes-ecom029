@@ -16,31 +16,12 @@ na máquina remota ou muda para o diretório pai do diretório atual.
 
 Clone o repositório e instale os pacotes necessários. É recomendável criar antes um ambiente virtual no python. 
 
-* No linux, basta executar:
+No linux, basta executar:
 
 ```console
-$ python3 -m venv <nome> # Cria o ambiente virtual.
-$ source <nome>/bin/activate # Ativa o ambiente virtual.
-$ pip install -r requirements.txt # Instala os pacotes necessários.
-```
-
-* No Windows, basta executar:
-
-```console
-$ python -m venv <nome> # Cria o ambiente virtual.
-$ source <nome>/Scripts/activate.bat # Ativa o ambiente virtual.
-$ pip install -r requirements.txt # Instala os pacotes necessários.
-```
-
-* Caso surja o erro `erro: Microsoft Visual C++ 14.0 is required` ao instalar os pacotes necessários:
-
-[Visual Studio](https://visualstudio.microsoft.com/pt-br/downloads/)
-```console
-$ instale o Visual Studio 2019 Community no link acima.
-$ durante a instalação, selecione Desktop development with c++.
-$ não precisa conectar a conta da microsoft e começar com código.
-$ na parte superior selecione extensions e procure por c++, com isso o download será feito.
-$ basta fechar o programa e aguardar a instalação.
+$ python3 -m venv <nome>
+$ source <nome>/bin/activate 
+$ pip install -r requirements.txt
 ```
 
 Para iniciar o programa servidor execute:
@@ -55,11 +36,17 @@ Para iniciar programa cliente execute:
 $ python myftp.py <server_name> <port_number>
 ```
 
+Ao utilizar Windows é possível que surja o erro `erro: Microsoft Visual C++ 14.0 is required`. Nesse caso recomendamos instalar o _Visual Studio 2019 Community_ (link a seguir):
+
+> [https://visualstudio.microsoft.com/pt-br/downloads](https://visualstudio.microsoft.com/pt-br/downloads)
+
+Durante a instalação selecione **Desktop development with C++**. Na parte superior, selecione **extensions** e procure por C++, com isso o download será feito e basta prosseguir com a instalação.
+
 # Especificação da aplicação
 
 O funcionamento do cliente e servidor são explicados a seguir:
 
-* Servidor FTP (programa `myftpserver`) - O programa servidor recebe um único parâmetro de linha de comando que é o número da porta a qual o servidor irá executar. Uma vez que o programa `myftpserver` for invocado, ele cria um _socket_ TCP, associa o número da porta do servidor ao seu _socket_ e passa a escutar conexões de clientes. Quando uma conexão com um cliente é estabelecida, o servidor começa a aceitar comandos e executá-los. Mensagens de erro apropriadas são enviadas ao cliente sempre que os comandos falham. Ao receber o comando `quit`, o servidor encerra a conexão e fica pronto para aceitar outras conexões.
+* Servidor FTP (programa `myftpserver`) - O programa servidor recebe um único parâmetro de linha de comando que é o número da porta a qual o servidor irá executar. Uma vez que o programa `myftpserver` for invocado, ele cria um _socket_ TCP, associa o número da porta do servidor ao seu _socket_ e passa a escutar conexões de clientes. Quando uma conexão com um cliente é estabelecida, o servidor começa a aceitar comandos e executá-los. Mensagens de erro apropriadas são enviadas ao cliente sempre que os comandos falham. Ao receber o comando `quit`, o servidor encerra a conexão com o cliente.
 
 * Cliente FTP (programa `myftp`) - O programa do cliente FTP recebe dois parâmetros de linha de comando: o endereço da máquina que o servidor reside e o número da porta. Uma vez que o cliente começa a rodar ele exibe um _prompt_ `myftp>`. A partir daí aceita e executa comandos enviando-os para o servidor e exibindo os resultados e mensagens de erro quando apropriado. O cliente deve cessar sua execução quando o usuário entrar o comando `quit`.
 
@@ -67,10 +54,23 @@ O funcionamento do cliente e servidor são explicados a seguir:
 
 Para um detalhamento do protocolo proposto ver arquivo `PROTOCOLO.md`.
 
-## Observações sobre a execução do projeto
+# Execução do projeto
 
-1. O servidor implmentado é concorrente (_multi-threaded_).
+A filosofia principal foi conceber um servidor FTP simples que opera com os comandos apresentados, transferindo arquivos entre hospedeiros diferentes. As principais caracteríticas em mente foram:
+
+1. O servidor implmentado é concorrente (_multi-threaded_), isto é suporta a conexão de múltiplos clientes simultaneamente.
 2. Assumimos que o usuário sempre digita um comando com a sintaxe correta (i.e. não existe checagem da sintaxe).
+
+As principais dificuldades surgiram em implementar os comandos de transferência de arquivos (**get & put**) onde uma atenção especial precisou ser dada, tendo em vista às restrições impostas pela transferência de dados através da rede (principalmente no tamanho do _buffer_ da ordem de poucos _kilobytes_).
+
+Também devemos citar que somente foram testados a transferência de arquivos localizados na pasta principal do projeto, como está descrito neste [issue](https://github.com/hugotallys/redes-ecom029/issues/3) do repositório.
+
+Algumas dificuldades foram encontradas ao testar aplicação num ambiente de diferentes sistemas operacionais, onde o servidor rodava no Windows e os clientes no Linux (o servidor simplesmente não respondia às requisições).
+
+Como perspectiva futura, as principais melhorias que podem ser feitas seriam:
+
+* Implementação de credenciais de acesso e permissões de usuário, o que tornaria a aplicação bem mais robusta num ambiente em que múltiplos usuários manipulam o diretório remoto.
+* Implementação de checagem da sintaxe para tratar casos em que o usuário digita comandos inválidos.
 
 # Referências
 
